@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Airline2Go - بحث الرحلات</title>
+</head>
+<body>
+  <h1>ابحث عن رحلات الطيران</h1>
+  <form id="flightForm">
+    <label>من: <input type="text" id="origin" value="DXB" required></label><br>
+    <label>إلى: <input type="text" id="destination" value="IST" required></label><br>
+    <label>تاريخ المغادرة: <input type="date" id="departureDate" required></label><br>
+    <label>تاريخ العودة: <input type="date" id="returnDate" required></label><br>
+    <label>عدد البالغين: <input type="number" id="adults" value="1" min="1" required></label><br>
+    <button type="submit">ابحث</button>
+  </form>
+
+  <h2>النتائج:</h2>
+  <div id="results"></div>
+
+  <script>
+    const form = document.getElementById('flightForm');
+    const results = document.getElementById('results');
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      results.innerHTML = "جاري البحث...";
+      const data = {
+        origin: document.getElementById('origin').value,
+        destination: document.getElementById('destination').value,
+        departureDate: document.getElementById('departureDate').value,
+        returnDate: document.getElementById('returnDate').value,
+        adults: parseInt(document.getElementById('adults').value)
+      };
+      try {
+        const res = await fetch('/api/flights/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        if (json.data) {
+          results.innerHTML = json.data.map(f =>
+            `<div style="margin:15px;padding:10px;border:1px solid #ccc">
+              <strong>السعر:</strong> ${f.price.total} ${f.price.currency}<br>
+              <strong>توقفات:</strong> ${f.itineraries[0].segments.length - 1}
+            </div>`
+          ).join('');
+        } else results.innerHTML = "لا نتائج أو خطأ.";
+      } catch (err) {
+        results.innerHTML = "⚠️ خطأ: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
